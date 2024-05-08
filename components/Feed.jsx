@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 
 import PromptCard from "./PromptCard";
+import { useSession } from "next-auth/react";
 
-const PromptCardList = ({ data, handleTagCick }) => {
+const PromptCardList = ({ data, setSearchText }) => {
   return (
     <div className="mt-16 prompt_layout">
       {data.map((post) => {
@@ -12,7 +13,7 @@ const PromptCardList = ({ data, handleTagCick }) => {
           <PromptCard
             key={post._id}
             post={post}
-            handleTagCick={handleTagCick}
+            setSearchText={setSearchText}
           />
         );
       })}
@@ -23,6 +24,7 @@ const PromptCardList = ({ data, handleTagCick }) => {
 const Feed = () => {
   const [searchText, setSearchText] = useState("");
   const [posts, setPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -34,7 +36,21 @@ const Feed = () => {
     fetchPost();
   }, []);
 
-  const handleSearchChange = (e) => {};
+  const handleSearchChange = (e) => {
+    e.preventDefault();
+    setSearchText(e.target.value);
+  };
+
+  useEffect(() => {
+    const filteredPosts = posts.filter(
+      (p) =>
+        p.prompt.toLowerCase().includes(searchText) ||
+        p.tag.toLowerCase().includes(searchText) ||
+        p.creator.email.includes(searchText)
+    );
+
+    setFilteredPosts(filteredPosts);
+  }, [searchText]);
 
   return (
     <section className="feed">
@@ -48,7 +64,10 @@ const Feed = () => {
           className="search_input peer"
         />
       </form>
-      <PromptCardList data={posts} handleTagCick={() => {}} />
+      <PromptCardList
+        data={searchText ? filteredPosts : posts}
+        setSearchText={setSearchText}
+      />
     </section>
   );
 };
